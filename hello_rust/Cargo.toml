@@ -4,8 +4,11 @@ version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = ["infra"]
 
 [dependencies]
+infra = {path = "infra"}
 
 [[bin]]
 name = "main1"
@@ -22,3 +25,11 @@ path = "src/main3.rs"
 [[bin]]
 name = "main4"
 path = "src/main4.rs"
+
+[[bin]]
+name = "main5"
+path = "src/main5.rs"
+
+[[bin]]
+name = "main6"
+path = "src/main6.rs"
