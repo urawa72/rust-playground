@@ -6,3 +6,17 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hello_macro = { path = "./hello_macro" }
+hello_macro_derive = { path = "./hello_macro/hello_macro_derive" }
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[[bin]]
+name = "main4"
+path = "src/main4.rs"
+
+[[bin]]
+name = "main5"
+path = "src/main5.rs"
