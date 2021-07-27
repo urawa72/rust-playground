@@ -27,6 +27,16 @@ impl Photo {
     }
 }
 
+impl Photo {
+    pub fn new(id: String, name: String, description: String) -> Photo {
+        Photo {
+            id,
+            name,
+            description,
+        }
+    }
+}
+
 pub struct Query;
 pub struct Mutation;
 

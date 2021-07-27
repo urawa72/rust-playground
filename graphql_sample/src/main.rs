@@ -1,22 +1,9 @@
 use std::sync::Arc;
 
-use crate::graphql::schema::{create_shema, Photo};
 use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer, Responder};
 use dotenv::{dotenv, from_filename};
-use graphql::schema::{Context, Schema};
+use graphql_sample::graphql::schema::{create_shema, Context, Photo, Schema};
 use juniper::{graphiql::graphiql_source, http::GraphQLRequest};
-
-pub mod graphql;
-
-impl Photo {
-    fn new(id: String, name: String, description: String) -> Photo {
-        Photo {
-            id,
-            name,
-            description,
-        }
-    }
-}
 
 /// handler for actix to access grahql
 pub async fn graphql(

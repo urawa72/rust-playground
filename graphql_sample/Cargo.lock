@@ -845,7 +845,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e4075386626662786ddb0ec9081e7c7eeb1ba31951f447ca780ef9f5d568189"
 
 [[package]]
-name = "graphql-sample"
+name = "graphql_sample"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
