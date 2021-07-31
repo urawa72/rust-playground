@@ -10,7 +10,5 @@ pub fn get_pool() -> PostgresPool {
     dotenv().ok();
     let url = env::var("DATABASE_URL").expect("no DB URL");
     let mgr = ConnectionManager::<PgConnection>::new(url);
-    r2d2::Pool::builder()
-        .build(mgr)
-        .expect("could not build connection pool")
+    r2d2::Pool::builder().build_unchecked(mgr)
 }
