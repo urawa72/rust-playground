@@ -1,11 +1,7 @@
 use std::{env, io};
 
-use actix_web::{middleware, web, App, HttpServer, Responder};
+use actix_web::{middleware, App, HttpServer};
 use todos::{db::get_pool, endpoints::graphql_endpoints};
-
-async fn hello_world() -> impl Responder {
-    "Hello, World!"
-}
 
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
@@ -17,7 +13,6 @@ async fn main() -> io::Result<()> {
         App::new()
             .data(pool.clone())
             .wrap(middleware::Logger::default())
-            .route("/", web::get().to(hello_world))
             .configure(graphql_endpoints)
     });
     server = server.bind("127.0.00.1:3000")?;
