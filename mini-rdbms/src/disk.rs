@@ -27,6 +27,12 @@ impl PageId {
     }
 }
 
+impl Default for PageId {
+    fn default() -> Self {
+        Self::INVALID_PAGE_ID
+    }
+}
+
 pub struct DiskManager {
     heap_file: File,
     next_page_id: u64,
@@ -67,5 +73,10 @@ impl DiskManager {
         let page_id = self.next_page_id;
         self.next_page_id += 1;
         PageId(page_id)
+    }
+
+    pub fn sync(&mut self) -> io::Result<()> {
+        self.heap_file.flush()?;
+        self.heap_file.sync_all()
     }
 }
