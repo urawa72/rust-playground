@@ -2,19 +2,19 @@ use std::marker::PhantomData;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Id<T> {
-    id: u64,
+    id: i64,
     _phantom: PhantomData<T>,
 }
 
 impl<T> Id<T> {
-    pub fn new(id: u64) -> Self {
+    pub fn new(id: i64) -> Self {
         Self {
             id,
             _phantom: PhantomData,
         }
     }
 
-    pub fn get(&self) -> u64 {
+    pub fn get(&self) -> i64 {
         self.id
     }
 }
