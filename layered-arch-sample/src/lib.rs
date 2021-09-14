@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate diesel;
 
-mod applications;
-mod domains;
-mod infrastructures;
+pub mod applications;
+pub mod domains;
+pub mod infrastructures;
+pub mod presentations;
