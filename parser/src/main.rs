@@ -1,4 +1,5 @@
-use std::{io, iter::Peekable};
+use std::error::Error as StdError;
+use std::{fmt, io, iter::Peekable, str::FromStr};
 
 // location from .0 to .1 range
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -435,6 +436,182 @@ fn parse(tokens: Vec<Token>) -> Result<Ast, ParseError> {
     }
 }
 
+#[test]
+fn test_parser() {
+    // 1 + 2 * 3 - -10
+    let ast = parse(vec![
+        Token::number(1, Loc(0, 1)),
+        Token::plus(Loc(2, 3)),
+        Token::number(2, Loc(4, 5)),
+        Token::asterisk(Loc(6, 7)),
+        Token::number(3, Loc(8, 9)),
+        Token::minus(Loc(10, 11)),
+        Token::minus(Loc(12, 13)),
+        Token::number(10, Loc(13, 15)),
+    ]);
+    assert_eq!(
+        ast,
+        Ok(Ast::binop(
+            BinOp::sub(Loc(10, 11)),
+            Ast::binop(
+                BinOp::add(Loc(2, 3)),
+                Ast::num(1, Loc(0, 1)),
+                Ast::binop(
+                    BinOp::new(BinOpKind::Mult, Loc(6, 7)),
+                    Ast::num(2, Loc(4, 5)),
+                    Ast::num(3, Loc(8, 9)),
+                    Loc(4, 9)
+                ),
+                Loc(0, 9)
+            ),
+            Ast::uniop(
+                UniOp::minus(Loc(12, 13)),
+                Ast::num(10, Loc(13, 15)),
+                Loc(12, 15)
+            ),
+            Loc(0, 15)
+        ))
+    )
+}
+
+impl FromStr for Ast {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let tokens = lex(s)?;
+        let ast = parse(tokens)?;
+        Ok(ast)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+enum Error {
+    Lexer(LexError),
+    Parser(ParseError),
+}
+
+impl From<LexError> for Error {
+    fn from(e: LexError) -> Self {
+        Error::Lexer(e)
+    }
+}
+
+impl From<ParseError> for Error {
+    fn from(e: ParseError) -> Self {
+        Error::Parser(e)
+    }
+}
+
+impl fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use self::TokenKind::*;
+        match self {
+            Number(n) => n.fmt(f),
+            Plus => write!(f, "+"),
+            Minus => write!(f, "-"),
+            Asterisk => write!(f, "*"),
+            Slash => write!(f, "/"),
+            LParen => write!(f, "("),
+            RParen => write!(f, ")"),
+        }
+    }
+}
+
+impl fmt::Display for Loc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}-{}", self.0, self.1)
+    }
+}
+
+impl fmt::Display for LexError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use self::LexErrorKind::*;
+        let loc = &self.loc;
+        match self.value {
+            InvalidChar(c) => write!(f, "{}: invalid char '{}'", loc, c),
+            Eof => write!(f, "End of file"),
+        }
+    }
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use self::ParseError::*;
+        match self {
+            UnexpectedToken(tok) => write!(f, "{}: {} is not expected", tok.loc, tok.value),
+            NotExpression(tok) => write!(
+                f,
+                "{}: '{}' is not a start of expression",
+                tok.loc, tok.value
+            ),
+            NotOperator(tok) => write!(f, "{}: '{}' is not an operator", tok.loc, tok.value),
+            UnclosedOpenParen(tok) => write!(f, "{}: '{}' is not closed", tok.loc, tok.value),
+            RedundantExpression(tok) => write!(
+                f,
+                "{}: expression after '{}' is redundant",
+                tok.loc, tok.value
+            ),
+            Eof => write!(f, "End of file"),
+        }
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "parser error")
+    }
+}
+
+impl StdError for LexError {}
+
+impl StdError for ParseError {}
+
+impl StdError for Error {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        use self::Error::*;
+        match self {
+            Lexer(lex) => Some(lex),
+            Parser(parse) => Some(parse),
+        }
+    }
+}
+
+fn print_annot(input: &str, loc: Loc) {
+    eprintln!("{}", input);
+    eprintln!("{}{}", " ".repeat(loc.0), "^".repeat(loc.1 - loc.0));
+}
+
+impl Error {
+    fn show_diagnostic(&self, input: &str) {
+        use self::Error::*;
+        use self::ParseError as P;
+        let (e, loc): (&dyn StdError, Loc) = match self {
+            Lexer(e) => (e, e.loc.clone()),
+            Parser(e) => {
+                let loc = match e {
+                    P::UnexpectedToken(Token { loc, .. })
+                    | P::NotExpression(Token { loc, .. })
+                    | P::NotOperator(Token { loc, .. })
+                    | P::UnclosedOpenParen(Token { loc, .. }) => loc.clone(),
+                    P::RedundantExpression(Token { loc, .. }) => Loc(loc.0, input.len()),
+                    P::Eof => Loc(input.len(), input.len() + 1),
+                };
+                (e, loc)
+            }
+        };
+        eprintln!("{}", e);
+        print_annot(input, loc);
+    }
+}
+
+fn show_trace<E: StdError>(e: E) {
+    eprintln!("{}", e);
+    let mut source = e.source();
+    while let Some(e) = source {
+        eprintln!("caused by {}", e);
+        source = e.source()
+    }
+}
+
 fn prompt(s: &str) -> io::Result<()> {
     use std::io::{stdout, Write};
     let stdout = stdout();
@@ -454,8 +631,14 @@ fn main() {
     loop {
         prompt("> ").unwrap();
         if let Some(Ok(line)) = lines.next() {
-            let tokens = lex(&line).unwrap();
-            let ast = parse(tokens).unwrap();
+            let ast = match line.parse::<Ast>() {
+                Ok(ast) => ast,
+                Err(e) => {
+                    e.show_diagnostic(&line);
+                    show_trace(e);
+                    continue;
+                }
+            };
             println!("{:?}", ast);
         } else {
             break;
