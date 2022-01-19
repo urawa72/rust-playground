@@ -13,3 +13,7 @@ echo-server:
 
 echo-server-copy:
 	cargo run --example echo-server-copy
+
+streams: redis
+	cargo run --example streams
+	@pkill mini-redis-server
