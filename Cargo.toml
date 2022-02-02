@@ -1,17 +1,14 @@
-[workspaces]
+[workspace]
 
 members = [
   "./grpc-sample",
 	"./parser",
 	"./wordcount",
-	"./mini-rdbms",
 	"./skim-sample",
 	"./toml-sample",
 	"./tokio-sample",
 	"./rusty-journal",
-	"./todos-graphql",
 	"./tokio-tutorial",
 	"./socket-programming",
 	"./trait-object-study",
-	"./layered-arch-sample"
 ]
