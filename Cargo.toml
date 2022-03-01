@@ -11,6 +11,7 @@ members = [
 	"./tokio-tutorial",
 	"./socket-programming",
 	"./trait-object-study",
+  "./regex-sample",
 	"./rstest-sample",
   "./pwhash-sample"
 ]
