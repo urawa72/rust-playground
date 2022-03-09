@@ -13,5 +13,6 @@ members = [
 	"./trait-object-study",
   "./regex-sample",
 	"./rstest-sample",
-  "./pwhash-sample"
+  "./pwhash-sample",
+  "./ulid-rs-sample"
 ]
