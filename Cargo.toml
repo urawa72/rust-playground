@@ -14,5 +14,6 @@ members = [
   "./regex-sample",
 	"./rstest-sample",
   "./pwhash-sample",
-  "./ulid-rs-sample"
+  "./ulid-rs-sample",
+  "./rand-chacha-sample",
 ]
