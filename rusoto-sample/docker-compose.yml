@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  localstack:
+    # lastestだとSESで日本語が使えない
+    image: localstack/localstack:0.12.18
+    ports:
+      - 4566:4566
+    environment:
+      - SERVICES=ses
+      - DEFAULT_REGION=ap-northeast-1
