@@ -5,7 +5,7 @@ fn main() {
     let password = "test_password";
     let hashed1 = bcrypt::hash_with(
         BcryptSetup {
-            salt: Some("salt"),
+            salt: Some("hogeeeeeeeeeeeeeeeee"),
             variant: Some(BcryptVariant::V2y),
             ..Default::default()
         },
@@ -14,4 +14,6 @@ fn main() {
     let hashed2 = bcrypt::hash(password).unwrap();
     assert!(bcrypt::verify("test_password", &hashed1));
     assert!(bcrypt::verify("test_password", &hashed2));
+    println!("{}", hashed1);
+    println!("{}", hashed2);
 }
