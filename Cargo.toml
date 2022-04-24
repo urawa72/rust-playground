@@ -17,5 +17,6 @@ members = [
   "./ulid-rs-sample",
   "./rand-chacha-sample",
   "./rusoto-sample",
-  "./rust-argon2-sample"
+  "./rust-argon2-sample",
+  "./graphql-monolith-api"
 ]
