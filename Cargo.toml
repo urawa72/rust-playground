@@ -16,5 +16,6 @@ members = [
   "./pwhash-sample",
   "./ulid-rs-sample",
   "./rand-chacha-sample",
-  "./rusoto-sample"
+  "./rusoto-sample",
+  "./rust-argon2-sample"
 ]
