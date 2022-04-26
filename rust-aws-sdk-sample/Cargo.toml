@@ -1,0 +1,20 @@
+[package]
+name = "rust-aws-sdk-sample"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "ses"
+path = "src/bin/ses.rs"
+
+[[bin]]
+name = "sesv2"
+path = "src/bin/sesv2.rs"
+
+[dependencies]
+aws-config = "0.10.1"
+aws-sdk-ses = "0.10.1"
+aws-sdk-sesv2 = "0.10.1"
+tokio = { version = "1", features = ["full"] }
