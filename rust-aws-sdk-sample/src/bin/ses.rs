@@ -23,7 +23,11 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn verify_identity(client: &Client) -> Result<(), Error> {
-    let resp = client.verify_email_identity().email_address("sendor@example.com").send().await?;
+    let resp = client
+        .verify_email_identity()
+        .email_address("sendor@example.com")
+        .send()
+        .await?;
     println!("{:?}", resp);
     Ok(())
 }

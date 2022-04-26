@@ -14,14 +14,14 @@ async fn main() -> Result<(), Error> {
         .await;
     let client = Client::new(&config);
 
-    // send_message(
-    //     &client,
-    //     "sendor@example.com",
-    //     "receiver@example.com",
-    //     "TestSubject",
-    //     "TestBody",
-    // )
-    // .await?;
+    send_message(
+        &client,
+        "sendor@example.com",
+        "receiver@example.com",
+        "TestSubject",
+        "TestBody",
+    )
+    .await?;
 
     let resp = client
         .list_contacts()
@@ -60,5 +60,6 @@ async fn send_message(
         .send()
         .await?;
 
+    println!("{:?}", resp);
     Ok(())
 }
