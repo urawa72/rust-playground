@@ -7,26 +7,165 @@ use actix_web::{
 };
 use async_graphql::{
     http::{playground_source, GraphQLPlaygroundConfig},
-    EmptySubscription, Object, Schema,
+    EmptySubscription, Enum, InputObject, Object, Schema,
 };
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use once_cell::sync::Lazy;
 
-static PHOTOS: Lazy<Mutex<Vec<Photo>>> = Lazy::new(|| Mutex::new(vec![]));
+static SEQUENCE_ID: Lazy<Mutex<usize>> = Lazy::new(|| Mutex::new(0));
+static USERS: Lazy<Mutex<Vec<User>>> = Lazy::new(|| {
+    Mutex::new(vec![
+        User {
+            login_id: "mHattrup".to_string(),
+            name: "Mike Hattrup".to_string(),
+            avatar: "".to_string(),
+        },
+        User {
+            login_id: "gPlake".to_string(),
+            name: "Glen Plake".to_string(),
+            avatar: "".to_string(),
+        },
+        User {
+            login_id: "sSchmidt".to_string(),
+            name: "Scot Schmidt".to_string(),
+            avatar: "".to_string(),
+        },
+    ])
+});
+static PHOTOS: Lazy<Mutex<Vec<Photo>>> = Lazy::new(|| {
+    Mutex::new(vec![
+        Photo {
+            id: 5,
+            name: "Dropping the Heart Chute".to_string(),
+            description: "The heart chute is one of my favorite chutes".to_string(),
+            category: PhotoCategory::Action,
+            user: "gPlake".to_string(),
+        },
+        Photo {
+            id: 2,
+            name: "Enjoying the sunshine".to_string(),
+            description: "".to_string(),
+            category: PhotoCategory::Selfie,
+            user: "sSchmidt".to_string(),
+        },
+        Photo {
+            id: 3,
+            name: "Gunbarrel 25".to_string(),
+            description: "25 laps on gunbarrel today".to_string(),
+            category: PhotoCategory::Portait,
+            user: "sSchmidt".to_string(),
+        },
+    ])
+});
 
+#[derive(Clone)]
+struct User {
+    login_id: String,
+    name: String,
+    avatar: String,
+}
+
+#[Object]
+impl User {
+    async fn login_id(&self) -> String {
+        self.login_id.clone()
+    }
+
+    async fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    async fn avatar(&self) -> String {
+        self.avatar.clone()
+    }
+
+    async fn post_photos(&self) -> Vec<Photo> {
+        PHOTOS
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|x| x.user == self.login_id)
+            .cloned()
+            .collect()
+    }
+}
+
+#[derive(Clone)]
 struct Photo {
+    id: usize,
     name: String,
     description: String,
+    category: PhotoCategory,
+    user: String,
+}
+
+#[Object]
+impl Photo {
+    async fn id(&self) -> usize {
+        self.id
+    }
+
+    async fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    async fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    async fn category(&self) -> PhotoCategory {
+        self.category
+    }
+
+    async fn posted_by(&self) -> User {
+        USERS
+            .lock()
+            .unwrap()
+            .iter()
+            .find(|user| user.login_id == self.user)
+            .cloned()
+            .unwrap()
+    }
+}
+
+#[derive(Enum, Clone, Copy, PartialEq, Eq)]
+enum PhotoCategory {
+    Selfie,
+    Portait,
+    Action,
+}
+
+impl Default for PhotoCategory {
+    fn default() -> Self {
+        Self::Portait
+    }
 }
 
 struct Mutation;
 
+#[derive(InputObject)]
+struct PostPhotoInput {
+    name: String,
+    description: String,
+    #[graphql(default_with = "PhotoCategory::default()")]
+    category: PhotoCategory,
+    user: String,
+}
+
 #[Object]
 impl Mutation {
-    async fn post_photo(&self, name: String, description: String) -> bool {
-        let photo = Photo { name, description };
-        PHOTOS.lock().unwrap().push(photo);
-        true
+    async fn post_photo(&self, input: PostPhotoInput) -> Photo {
+        let mut id = SEQUENCE_ID.lock().unwrap();
+        *id += 1;
+        let photo = Photo {
+            id: *id,
+            name: input.name,
+            description: input.description,
+            category: input.category,
+            user: input.user,
+        };
+        PHOTOS.lock().unwrap().push(photo.clone());
+        photo
     }
 }
 
@@ -36,6 +175,10 @@ struct Query;
 impl Query {
     async fn total_photos(&self) -> usize {
         PHOTOS.lock().unwrap().len()
+    }
+
+    async fn all_photos(&self) -> Vec<Photo> {
+        PHOTOS.lock().unwrap().clone()
     }
 }
 
