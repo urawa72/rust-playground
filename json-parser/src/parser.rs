@@ -1,13 +1,15 @@
+use std::collections::BTreeMap;
+
 use crate::{Token, Value};
 
 #[derive(Debug, Clone)]
-pub struct ParseError {
+pub struct ParserError {
     pub msg: String,
 }
 
-impl ParseError {
-    pub fn new(msg: &str) -> ParseError {
-        ParseError {
+impl ParserError {
+    pub fn new(msg: &str) -> ParserError {
+        ParserError {
             msg: msg.to_string(),
         }
     }
@@ -25,33 +27,75 @@ impl Parser {
         Parser { tokens, index: 0 }
     }
 
-    fn parse_array(&mut self) -> Result<Value, ParseError> {
+    fn parse_array(&mut self) -> Result<Value, ParserError> {
         todo!()
     }
 
-    fn parse_object(&mut self) -> Result<Value, ParseError> {
-        todo!()
+    /// `Object`のパースを行う。
+    /// {
+    ///   "key1": 12345,
+    ///   "key2": 6789
+    /// }
+    fn parse_object(&mut self) -> Result<Value, ParserError> {
+        let token = self.peek_expect()?;
+        if *token != Token::LeftBrace {
+            return Err(ParserError::new(&format!(
+                "error: JSON object must starts {{ {:?}",
+                token
+            )));
+        }
+
+        self.next_expect()?;
+
+        let mut object = BTreeMap::new();
+
+        if *self.peek_expect()? == Token::RightBrace {
+            return Ok(Value::Object(object));
+        }
+
+        loop {
+            let token1 = self.next_expect()?.clone();
+            let token2 = self.next_expect()?;
+
+            match (token1, token2) {
+                (Token::String(key), Token::Colon) => {
+                    object.insert(key.to_string(), self.parse()?);
+                }
+                _ => {
+                    return Err(ParserError::new(
+                        "error: a pair (key(string) and : token) token is expected",
+                    ));
+                }
+            }
+            let token3 = self.next_expect()?;
+            match token3 {
+                Token::RightBrace => {
+                    return Ok(Value::Object(object));
+                }
+                Token::Comma => {
+                    continue;
+                }
+                _ => {
+                    return Err(ParserError::new(&format!(
+                        "error: a {{ or , token is expected {:?}",
+                        token3
+                    )));
+                }
+            }
+        }
     }
 
-    pub fn parse(&mut self) -> Result<Value, ParseError> {
+    pub fn parse(&mut self) -> Result<Value, ParserError> {
         let token = self.peek_expect()?.clone();
         let value = match token {
             Token::LeftBrace => self.parse_object(),
             Token::LeftBracket => self.parse_array(),
-            Token::String(s) => {
-                Ok(Value::String(s.to_string()))
-            }
-            Token::Number(n) => {
-                Ok(Value::Number(*n))
-            }
-            Token::Bool(b) => {
-                Ok(Value::Bool(*b))
-            }
-            Token::Null => {
-                Ok(Value::Null)
-            }
+            Token::String(s) => Ok(Value::String(s)),
+            Token::Number(n) => Ok(Value::Number(n)),
+            Token::Bool(b) => Ok(Value::Bool(b)),
+            Token::Null => Ok(Value::Null),
             _ => {
-                return Err(ParseError::new(&format!(
+                return Err(ParserError::new(&format!(
                     "error: a token must start {{, [, string, number, bool or null {:?}",
                     token
                 )));
@@ -65,9 +109,9 @@ impl Parser {
         self.tokens.get(self.index)
     }
 
-    fn peek_expect(&self) -> Result<&Token, ParseError> {
+    fn peek_expect(&self) -> Result<&Token, ParserError> {
         self.peek()
-            .ok_or_else(|| ParseError::new("error: a token is not peekable"))
+            .ok_or_else(|| ParserError::new("error: a token is not peekable"))
     }
 
     fn next(&mut self) -> Option<&Token> {
@@ -75,9 +119,9 @@ impl Parser {
         self.tokens.get(self.index - 1)
     }
 
-    fn next_expect(&mut self) -> Result<&Token, ParseError> {
+    fn next_expect(&mut self) -> Result<&Token, ParserError> {
         self.next()
-            .ok_or_else(|| ParseError::new("error: can not get next token"))
+            .ok_or_else(|| ParserError::new("error: can not get next token"))
     }
 }
 
