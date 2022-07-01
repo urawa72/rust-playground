@@ -20,5 +20,6 @@ members = [
   "./rust-argon2-sample",
   "./graphql-monolith-api",
   "./rust-aws-sdk-sample",
-  "./json-parser"
+  "./json-parser",
+  "./to-hex",
 ]
