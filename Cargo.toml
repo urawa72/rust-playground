@@ -22,4 +22,5 @@ members = [
   "./rust-aws-sdk-sample",
   "./json-parser",
   "./to-hex",
+  "./redis-rs-sample",
 ]
