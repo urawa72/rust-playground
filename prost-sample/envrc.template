@@ -1,0 +1,2 @@
+export PROTOC=/opt/homebrew/bin/protoc
+export PROTOC_INCLUDE=/usr/local/include

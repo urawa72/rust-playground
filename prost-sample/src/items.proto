@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package snazzy.items;
+
+message Shirt {
+    enum Size {
+        SMALL = 0;
+        MEDIUM = 1;
+        LARGE = 2;
+    }
+
+    required string color = 1;
+    required Size size = 2;
+    optional int32 message = 3;
+};

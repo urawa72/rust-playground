@@ -23,4 +23,5 @@ members = [
   "./json-parser",
   "./to-hex",
   "./redis-rs-sample",
+  "./prost-sample",
 ]
