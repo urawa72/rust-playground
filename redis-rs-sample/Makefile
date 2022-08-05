@@ -1,5 +1,5 @@
 start:
-	docker run -d -it --rm --name redis-rs-sample -p 6379:6379 redis:latest
+	docker run -d -it --rm --name redis-rs-sample -p 6380:6379 redis:latest
 
 stop:
 	docker stop redis-rs-sample

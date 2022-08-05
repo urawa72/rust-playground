@@ -2,7 +2,7 @@ use redis::{self, Client, Commands};
 use serde::{Deserialize, Serialize};
 
 fn main() {
-    let url = "redis://127.0.0.1:6379/";
+    let url = "redis://127.0.0.1:6380/";
     let client = Client::open(url).unwrap();
     let mut con = client.get_connection().unwrap();
 
@@ -15,6 +15,8 @@ fn main() {
 
     let res: String = con.get("test").unwrap();
     let val: TestValue = serde_json::from_str(&res).unwrap();
+    let result = con.get::<&str, Option<String>>("aiueo").unwrap();
+    println!("{:?}", result);
 
     println!("{:?}", val);
 }
