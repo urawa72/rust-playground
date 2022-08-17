@@ -24,4 +24,5 @@ members = [
   "./to-hex",
   "./redis-rs-sample",
   "./prost-sample",
+  "./tokio-console-test",
 ]
