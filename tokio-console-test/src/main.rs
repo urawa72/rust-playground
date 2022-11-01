@@ -1,55 +1,53 @@
-use mini_redis::{Connection, Frame};
-use tokio::net::{TcpListener, TcpStream};
+use std::error::Error;
+use std::net::SocketAddr;
+use std::{env, io};
+use tokio::net::UdpSocket;
 
-#[tokio::main]
-async fn main() {
-    console_subscriber::init();
+struct Server {
+    socket: UdpSocket,
+    buf: Vec<u8>,
+    to_send: Option<(usize, SocketAddr)>,
+}
 
-    // リスナーをこのアドレスにバインドする
-    let listener = TcpListener::bind("127.0.0.1:6377").await.unwrap();
+impl Server {
+    async fn run(self) -> Result<(), io::Error> {
+        let Server {
+            socket,
+            mut buf,
+            mut to_send,
+        } = self;
 
-    loop {
-        // タプルの2つ目の要素は、新しいコネクションのIPとポートの情報を含んでいる
-        let (socket, _) = listener.accept().await.unwrap();
+        loop {
+            if let Some((size, peer)) = to_send {
+                let amt = socket.send_to(&buf[..size], &peer).await?;
 
-        tokio::spawn(async move {
-            process(socket).await;
-        });
+                println!("Echoed {}/{} bytes to {}", amt, size, peer);
+            }
+
+            to_send = Some(socket.recv_from(&mut buf).await?);
+        }
     }
 }
 
-async fn process(socket: TcpStream) {
-    use mini_redis::Command::{self, Get, Set};
-    use std::collections::HashMap;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    console_subscriber::init();
 
-    // データを蓄えるため `HashMap` を使う
-    let mut db = HashMap::new();
+    let addr = env::args()
+        .nth(1)
+        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
 
-    // `mini-redis` が提供するコネクションによって、ソケットから来るフレームをパースする
-    let mut connection = Connection::new(socket);
+    let socket = UdpSocket::bind(&addr).await?;
+    println!("Listening on: {}", socket.local_addr()?);
 
-    // コネクションからコマンドを受け取るため `read_frame` を使う
-    while let Some(frame) = connection.read_frame().await.unwrap() {
-        let response = match Command::from_frame(frame).unwrap() {
-            Set(cmd) => {
-                // `Vec<u8> として保存する
-                db.insert(cmd.key().to_string(), cmd.value().to_vec());
-                Frame::Simple("OK".to_string())
-            }
-            Get(cmd) => {
-                if let Some(value) = db.get(cmd.key()) {
-                    // `Frame::Bulk` はデータが Bytes` 型であることを期待する
-                    // この型についてはのちほど解説する
-                    // とりあえずここでは `.into()` を使って `&Vec<u8>` から `Bytes` に変換する
-                    Frame::Bulk(value.clone().into())
-                } else {
-                    Frame::Null
-                }
-            }
-            cmd => panic!("unimplemented {:?}", cmd),
-        };
+    let server = Server {
+        socket,
+        buf: vec![0; 1024],
+        to_send: None,
+    };
 
-        // クライアントへのレスポンスを書き込む
-        connection.write_frame(&response).await.unwrap();
-    }
+    // This starts the server task.
+    server.run().await?;
+
+    Ok(())
 }

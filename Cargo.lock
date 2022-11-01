@@ -4691,7 +4691,6 @@ name = "tokio-console-test"
 version = "0.1.0"
 dependencies = [
  "console-subscriber",
- "mini-redis",
  "tokio 1.17.0",
 ]
 
